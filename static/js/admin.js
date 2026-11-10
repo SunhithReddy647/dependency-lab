@@ -8,8 +8,31 @@ let CACHED_METRICS = null;
 let CACHED_PARTICIPANTS = [];
 
 document.addEventListener("DOMContentLoaded", () => {
+  initAdminTheme();
   refreshAdminData();
 });
+
+function initAdminTheme() {
+  const saved = localStorage.getItem("admin_theme");
+  const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const theme = saved || (prefersDark ? "dark" : "light");
+  setAdminTheme(theme);
+}
+
+function setAdminTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("admin_theme", theme);
+  const icon = document.getElementById("themeToggleIcon");
+  const text = document.getElementById("themeToggleText");
+  if (icon) icon.innerText = theme === "dark" ? "🌙" : "☀️";
+  if (text) text.innerText = theme === "dark" ? "Dark" : "Light";
+}
+
+window.toggleAdminTheme = function() {
+  const current = document.documentElement.getAttribute("data-theme") || "light";
+  const next = current === "dark" ? "light" : "dark";
+  setAdminTheme(next);
+};
 
 function switchAdminTab(tabName) {
   CURRENT_TAB = tabName;
@@ -340,7 +363,7 @@ function renderDependencyTab(container, m) {
 
       <div style="display: grid; grid-template-columns: 1.3fr 1fr; gap: 24px;">
         <!-- Scatter Quadrant Plot -->
-        <div style="background: #FAF8FF; border: 1.5px solid var(--admin-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center;">
+        <div style="background: var(--admin-card); border: 1px solid var(--admin-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center;">
           <div style="font-size: 13px; font-weight: 700; color: var(--admin-navy); margin-bottom: 10px;">
             Quadrant Map: Self-Assessment vs. Revealed Actions
           </div>
@@ -447,9 +470,9 @@ function renderThinkingTab(container, m) {
       </div>
 
       <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 20px;">
-        <div style="border: 1.5px solid var(--admin-border); border-radius: 10px; padding: 18px; background: #FFFFFF;">
+        <div style="border: 1px solid var(--admin-border); border-radius: 12px; padding: 20px; background: var(--admin-card); box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
           <div style="font-size: 11px; font-weight: 700; color: var(--admin-purple); text-transform: uppercase;">Task A</div>
-          <h4 style="font-size: 14.5px; font-weight: 700; color: var(--admin-navy); margin: 6px 0 10px;">Idea Development</h4>
+          <h4 style="font-size: 15px; font-weight: 700; color: var(--admin-navy); margin: 6px 0 10px;">Idea Development</h4>
           <p style="font-size: 13px; color: var(--admin-text-muted); line-height: 1.5; margin-bottom: 14px;">
             Proposing an unassisted project direction on digital tool influence.
           </p>
@@ -458,9 +481,9 @@ function renderThinkingTab(container, m) {
           </button>
         </div>
 
-        <div style="border: 1.5px solid var(--admin-border); border-radius: 10px; padding: 18px; background: #FFFFFF;">
+        <div style="border: 1px solid var(--admin-border); border-radius: 12px; padding: 20px; background: var(--admin-card); box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
           <div style="font-size: 11px; font-weight: 700; color: var(--admin-purple); text-transform: uppercase;">Task B</div>
-          <h4 style="font-size: 14.5px; font-weight: 700; color: var(--admin-navy); margin: 6px 0 10px;">Problem Formulation</h4>
+          <h4 style="font-size: 15px; font-weight: 700; color: var(--admin-navy); margin: 6px 0 10px;">Problem Formulation</h4>
           <p style="font-size: 13px; color: var(--admin-text-muted); line-height: 1.5; margin-bottom: 14px;">
             Identifying core academic problems created by homework automation.
           </p>
@@ -469,9 +492,9 @@ function renderThinkingTab(container, m) {
           </button>
         </div>
 
-        <div style="border: 1.5px solid var(--admin-border); border-radius: 10px; padding: 18px; background: #FFFFFF;">
+        <div style="border: 1px solid var(--admin-border); border-radius: 12px; padding: 20px; background: var(--admin-card); box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
           <div style="font-size: 11px; font-weight: 700; color: var(--admin-purple); text-transform: uppercase;">Task C</div>
-          <h4 style="font-size: 14.5px; font-weight: 700; color: var(--admin-navy); margin: 6px 0 10px;">Argument Construction</h4>
+          <h4 style="font-size: 15px; font-weight: 700; color: var(--admin-navy); margin: 6px 0 10px;">Argument Construction</h4>
           <p style="font-size: 13px; color: var(--admin-text-muted); line-height: 1.5; margin-bottom: 14px;">
             Formulating personal viewpoint on AI speed vs intellectual dependency.
           </p>
@@ -524,10 +547,10 @@ function renderScenarioBox(title, counts) {
     const pct = Math.round((c / total) * 100);
     const color = tag === 0 ? '#059669' : tag === 1 ? '#2563EB' : tag === 2 ? '#D97706' : '#DC2626';
     rows += `
-      <div style="margin-bottom: 10px;">
-        <div style="display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 600; color: var(--admin-navy); margin-bottom: 4px;">
+      <div style="margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: var(--admin-navy); margin-bottom: 5px;">
           <span>${labels[tag]}</span>
-          <span>${c} (${pct}%)</span>
+          <span style="color: var(--admin-text-muted); font-weight: 500;">${c} (${pct}%)</span>
         </div>
         <div style="background: var(--admin-border-subtle); border-radius: 4px; height: 8px; overflow: hidden;">
           <div style="width: ${pct}%; background: ${color}; height: 100%; border-radius: 4px;"></div>
@@ -537,8 +560,8 @@ function renderScenarioBox(title, counts) {
   }
 
   return `
-    <div style="border: 1.5px solid var(--admin-border); border-radius: 10px; padding: 20px; background: #FFFFFF;">
-      <h4 style="font-size: 14.5px; font-weight: 700; color: var(--admin-navy); margin-bottom: 14px;">${title}</h4>
+    <div style="border: 1px solid var(--admin-border); border-radius: 12px; padding: 20px; background: var(--admin-card); box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
+      <h4 style="font-size: 15px; font-weight: 700; color: var(--admin-navy); margin-bottom: 14px;">${title}</h4>
       ${rows}
     </div>
   `;
@@ -574,7 +597,7 @@ function renderVerificationTab(container, m) {
 
       <div style="background: var(--admin-border-subtle); border: 1px solid var(--admin-border); border-radius: 10px; padding: 20px; margin-top: 16px;">
         <h4 style="font-size: 14.5px; font-weight: 700; color: var(--admin-navy); margin-bottom: 8px;">Predefined Methodological Answer Key</h4>
-        <ul style="padding-left: 20px; font-size: 13.5px; color: #475569; line-height: 1.6;">
+        <ul style="padding-left: 20px; font-size: 13.5px; color: var(--admin-navy-secondary); line-height: 1.6;">
           <li><strong>Planted Error 1 (Sentence 2):</strong> Falsely asserts purposive sampling is a probability method where every person has an equal selection chance.</li>
           <li><strong>Planted Error 2 (Sentence 3):</strong> Claims non-probability qualitative findings can be statistically generalized to the entire national population.</li>
           <li><strong>Planted Error 3 (Sentence 4):</strong> Asserts a mandatory quota of at least 1,000 subjects for qualitative validity.</li>
@@ -719,7 +742,7 @@ function renderExportsTab(container, m) {
       </div>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 14px;">
-        <div style="border: 1.5px solid var(--admin-border); border-radius: 12px; padding: 24px;">
+        <div style="border: 1px solid var(--admin-border); border-radius: 12px; padding: 24px; background: var(--admin-card); box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
           <h4 style="font-size: 15px; font-weight: 700; color: var(--admin-navy); margin-bottom: 8px;">Long-Format Tidy CSV</h4>
           <p style="font-size: 13.5px; color: var(--admin-text-muted); line-height: 1.55; margin-bottom: 18px;">
             Standardized RFC 4180 CSV export. Each row represents a single activity response with participant academic profiles repeated for immediate ANOVA or regression grouping.
@@ -729,7 +752,7 @@ function renderExportsTab(container, m) {
           </button>
         </div>
 
-        <div style="border: 1.5px solid var(--admin-border); border-radius: 12px; padding: 24px;">
+        <div style="border: 1px solid var(--admin-border); border-radius: 12px; padding: 24px; background: var(--admin-card); box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
           <h4 style="font-size: 15px; font-weight: 700; color: var(--admin-navy); margin-bottom: 8px;">Hierarchical JSON Archive</h4>
           <p style="font-size: 13.5px; color: var(--admin-text-muted); line-height: 1.55; margin-bottom: 18px;">
             Complete nested dataset including raw timestamps, sentence flags, and qualitative thematic tags.
