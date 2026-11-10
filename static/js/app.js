@@ -13,6 +13,7 @@ const STATE = {
   sessionInterval: null,
   audioCtx: null,
   soundEnabled: true,
+  isSessionActive: false,
   scenariosShuffled: {},
   responses: {}
 };
@@ -156,7 +157,16 @@ const JOURNEY_STEPS = [
 
 document.addEventListener("DOMContentLoaded", () => {
   bindKeyboardShortcuts();
+  updateResumeButtonVisibility();
 });
+
+window.updateResumeButtonVisibility = function() {
+  const resumeBtn = document.getElementById("resumeSessionBtn");
+  if (!resumeBtn) return;
+  const isParticipantView = document.getElementById("participantView") && document.getElementById("participantView").style.display !== "none";
+  const isSessionOngoing = STATE.isSessionActive || isParticipantView;
+  resumeBtn.style.display = isSessionOngoing ? "none" : "inline-flex";
+};
 
 // Audio Haptic Chime
 function playChime(freq = 880, duration = 0.08) {
@@ -183,8 +193,10 @@ function playChime(freq = 880, duration = 0.08) {
 
 window.toggleTactileSound = function() {
   STATE.soundEnabled = !STATE.soundEnabled;
-  document.getElementById("soundIcon").innerText = STATE.soundEnabled ? "🔊" : "🔇";
-  document.getElementById("soundLabel").innerText = STATE.soundEnabled ? "Sound On" : "Sound Muted";
+  const icon = document.getElementById("soundIcon");
+  const label = document.getElementById("soundLabel");
+  if (icon) icon.innerText = STATE.soundEnabled ? "🔊" : "🔇";
+  if (label) label.innerText = STATE.soundEnabled ? "Sound On" : "Sound Muted";
 };
 
 // Keyboard Navigation Accelerators (1-5 to select, Enter to advance)
@@ -220,10 +232,14 @@ function bindKeyboardShortcuts() {
 window.navigateToHome = function() {
   document.getElementById("landingView").style.display = "block";
   document.getElementById("participantView").style.display = "none";
+  updateResumeButtonVisibility();
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
 window.startParticipantJourney = async function(targetStepIndex = 0) {
+  STATE.isSessionActive = true;
+  updateResumeButtonVisibility();
+
   if (!STATE.participantId) {
     try {
       const res = await fetch("/api/participant/start", { method: "POST" });
@@ -248,6 +264,7 @@ window.startParticipantJourney = async function(targetStepIndex = 0) {
   document.getElementById("landingView").style.display = "none";
   document.getElementById("participantView").style.display = "block";
   document.getElementById("participantCodeLabel").innerText = `${STATE.participantId} • 🔒 Confidential`;
+  updateResumeButtonVisibility();
   goToJourneyStep(targetStepIndex);
 };
 
@@ -299,6 +316,8 @@ function goToJourneyStep(idx) {
 
   if (step.timer) startActivityTimer();
   else stopActivityTimer();
+
+  updateResumeButtonVisibility();
 
   const container = document.getElementById("activityBody");
   container.innerHTML = "";
@@ -909,6 +928,11 @@ function renderStepConfirmation(container) {
   // Fire celebratory confetti!
   triggerConfetti();
 
+  STATE.isSessionActive = false;
+  STATE.participantId = null;
+  localStorage.removeItem("dl_participant_code");
+  updateResumeButtonVisibility();
+
   container.innerHTML = `
     <div style="text-align: center; padding: 20px 0;">
       <div style="width: 72px; height: 72px; background: #D1FAE5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; color: #059669; margin: 0 auto 20px; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.2);">
@@ -1119,7 +1143,10 @@ async function withdrawParticipantData() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ participant_id: STATE.participantId })
     });
+    STATE.isSessionActive = false;
+    STATE.participantId = null;
     localStorage.removeItem("dl_participant_code");
+    updateResumeButtonVisibility();
     alert("All your responses have been permanently withdrawn and erased from the dataset.");
     navigateToHome();
   }
@@ -1134,7 +1161,9 @@ async function submitResumeSession() {
       const state = await res.json();
       closeModal("resumeModal");
       STATE.participantId = state.participant_id;
+      STATE.isSessionActive = true;
       localStorage.setItem("dl_participant_code", STATE.participantId);
+      updateResumeButtonVisibility();
       startParticipantJourney(1);
     } else {
       alert("Participant code not found or was previously erased.");
