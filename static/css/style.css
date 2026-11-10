@@ -301,26 +301,74 @@ p {
   flex-shrink: 0;
 }
 
-/* Sound Effect Haptic Toggle */
-.sound-toggle-chip {
-  display: inline-flex;
+/* Device Session Continuity Auto-Resume Banner */
+.device-resume-banner {
+  background: linear-gradient(135deg, #FFFFFF 0%, #FAF8FF 100%);
+  border: 1.5px solid #DDD6FE;
+  border-left: 5px solid var(--accent-purple);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-1);
-  padding: 0 var(--space-3);
-  min-height: 2.5rem; /* 40px touch zone */
-  border-radius: var(--radius-pill);
-  background: var(--bg-lavender-subtle);
-  border: 1px solid var(--border-lavender);
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-  color: var(--accent-purple);
-  cursor: pointer;
-  transition: all 0.15s ease;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 4px 20px rgba(109, 40, 217, 0.08);
+  animation: slideDownFade 0.3s ease;
 }
 
-.sound-toggle-chip:active {
-  transform: scale(0.96);
+@media (max-width: 768px) {
+  .device-resume-banner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 14px 16px;
+  }
+  .resume-banner-buttons {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+  .resume-banner-buttons .btn {
+    flex: 1;
+    text-align: center;
+    padding: 10px 12px !important;
+  }
+}
+
+.resume-pulse-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--accent-purple);
+  background: var(--bg-lavender-tint);
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  margin-bottom: 4px;
+}
+
+.resume-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-purple);
+  box-shadow: 0 0 6px var(--accent-purple);
+  animation: pulseDot 1.5s infinite;
+}
+
+.resume-banner-title {
+  font-size: 14.5px;
+  color: var(--text-navy);
+  line-height: 1.45;
+}
+
+.resume-banner-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 /* ========================================================

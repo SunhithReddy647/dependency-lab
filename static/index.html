@@ -42,6 +42,27 @@
        LANDING PAGE
        ======================================================== -->
   <section id="landingView" class="landing-container">
+    <!-- Automatic Device & IP Session Continuity Banner -->
+    <div id="deviceResumeBanner" class="device-resume-banner" style="display: none;">
+      <div class="resume-banner-left">
+        <div class="resume-pulse-badge">
+          <span class="resume-pulse-dot"></span>
+          <span>Unfinished Session Detected on this Device</span>
+        </div>
+        <div class="resume-banner-title">
+          Welcome back! Continue your active session as <strong id="bannerParticipantCode" style="font-family: var(--font-mono); color: var(--accent-purple);">DL-XXXXXX</strong> (<span id="bannerStepProgress">Step 2 of 8</span>)
+        </div>
+      </div>
+      <div class="resume-banner-buttons">
+        <button class="btn btn-purple" onclick="resumeDetectedSession()" style="padding: 10px 22px; font-size: 14px;">
+          Continue Session →
+        </button>
+        <button class="btn btn-outline" onclick="dismissDetectedSession()" style="padding: 10px 16px; font-size: 13px;">
+          Start Fresh
+        </button>
+      </div>
+    </div>
+
     <div class="hero-academic-box">
       <div class="academic-badge-pill">
         <span class="academic-badge-dot"></span>

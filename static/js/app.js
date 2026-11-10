@@ -14,6 +14,9 @@ const STATE = {
   audioCtx: null,
   soundEnabled: true,
   isSessionActive: false,
+  isCompleted: false,
+  profile: null,
+  consented: false,
   scenariosShuffled: {},
   responses: {}
 };
@@ -158,7 +161,138 @@ const JOURNEY_STEPS = [
 document.addEventListener("DOMContentLoaded", () => {
   bindKeyboardShortcuts();
   updateResumeButtonVisibility();
+  checkForDeviceSession();
 });
+
+function persistLocalSession() {
+  if (!STATE.participantId || STATE.isCompleted) return;
+  const payload = {
+    participantId: STATE.participantId,
+    currentStepIndex: STATE.currentStepIndex,
+    responses: STATE.responses,
+    profile: STATE.profile || null,
+    consented: STATE.consented || false,
+    timestamp: Date.now()
+  };
+  try {
+    localStorage.setItem("dl_active_session", JSON.stringify(payload));
+    localStorage.setItem("dl_participant_code", STATE.participantId);
+  } catch (e) {}
+}
+
+window.checkForDeviceSession = async function() {
+  let saved = null;
+  try {
+    const raw = localStorage.getItem("dl_active_session");
+    if (raw) saved = JSON.parse(raw);
+  } catch (e) {}
+
+  let deviceState = null;
+  try {
+    const res = await fetch("/api/participant/resume-by-device");
+    if (res.ok) {
+      const data = await res.json();
+      if (data.found && data.state && !data.state.completed) {
+        deviceState = data.state;
+      }
+    }
+  } catch (e) {}
+
+  const activeCode = saved?.participantId || deviceState?.participant_id || localStorage.getItem("dl_participant_code");
+  if (!activeCode) return;
+  if (saved?.isCompleted || (deviceState && deviceState.completed)) return;
+
+  let targetStep = 1;
+  if (saved && typeof saved.currentStepIndex === "number" && saved.currentStepIndex > 0) {
+    targetStep = saved.currentStepIndex;
+  } else if (deviceState && deviceState.responses) {
+    const cnt = Object.keys(deviceState.responses).length;
+    targetStep = Math.min(cnt + 2, JOURNEY_STEPS.length - 2);
+  }
+
+  const banner = document.getElementById("deviceResumeBanner");
+  const codeLabel = document.getElementById("bannerParticipantCode");
+  const stepLabel = document.getElementById("bannerStepProgress");
+  if (banner && codeLabel) {
+    codeLabel.innerText = activeCode;
+    const stepGroup = JOURNEY_STEPS[targetStep]?.stepGroup ?? 2;
+    if (stepLabel) stepLabel.innerText = `Step ${stepGroup + 1} of 8`;
+    banner.style.display = "flex";
+
+    window._pendingResume = {
+      participantId: activeCode,
+      targetStep: targetStep,
+      saved: saved,
+      deviceState: deviceState
+    };
+  }
+};
+
+window.resumeDetectedSession = async function() {
+  const pending = window._pendingResume;
+  const activeCode = pending?.participantId || localStorage.getItem("dl_participant_code");
+  if (!activeCode) return;
+
+  STATE.participantId = activeCode;
+  STATE.isSessionActive = true;
+  localStorage.setItem("dl_participant_code", activeCode);
+
+  if (pending?.saved?.responses) {
+    STATE.responses = { ...STATE.responses, ...pending.saved.responses };
+  }
+  if (pending?.saved?.profile) {
+    STATE.profile = pending.saved.profile;
+  }
+  if (pending?.saved?.consented) {
+    STATE.consented = true;
+  }
+  if (pending?.deviceState?.responses) {
+    for (const [k, v] of Object.entries(pending.deviceState.responses)) {
+      if (!STATE.responses[k]) STATE.responses[k] = v;
+    }
+  }
+  if (pending?.deviceState?.level && !STATE.profile) {
+    STATE.profile = {
+      level: pending.deviceState.level,
+      discipline: pending.deviceState.discipline,
+      experience: pending.deviceState.experience,
+      tools: pending.deviceState.tools || []
+    };
+  }
+
+  // Sync to server so serverless container always has the session restored
+  try {
+    await fetch("/api/participant/sync-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        participant_id: STATE.participantId,
+        current_step: pending?.targetStep || 1,
+        profile: STATE.profile,
+        responses: STATE.responses,
+        completed: false
+      })
+    });
+  } catch (e) {}
+
+  const banner = document.getElementById("deviceResumeBanner");
+  if (banner) banner.style.display = "none";
+
+  document.getElementById("landingView").style.display = "none";
+  document.getElementById("participantView").style.display = "block";
+  document.getElementById("participantCodeLabel").innerText = `${STATE.participantId} • 🔒 Confidential`;
+  updateResumeButtonVisibility();
+  goToJourneyStep(pending?.targetStep || 1);
+};
+
+window.dismissDetectedSession = function() {
+  localStorage.removeItem("dl_active_session");
+  localStorage.removeItem("dl_participant_code");
+  STATE.participantId = null;
+  window._pendingResume = null;
+  const banner = document.getElementById("deviceResumeBanner");
+  if (banner) banner.style.display = "none";
+};
 
 window.updateResumeButtonVisibility = function() {
   const resumeBtn = document.getElementById("resumeSessionBtn");
@@ -237,6 +371,12 @@ window.navigateToHome = function() {
 };
 
 window.startParticipantJourney = async function(targetStepIndex = 0) {
+  // If an active session was detected and participant starts from landing page, seamlessly continue it
+  if (window._pendingResume && targetStepIndex === 0) {
+    resumeDetectedSession();
+    return;
+  }
+
   STATE.isSessionActive = true;
   updateResumeButtonVisibility();
 
@@ -246,6 +386,7 @@ window.startParticipantJourney = async function(targetStepIndex = 0) {
       const data = await res.json();
       STATE.participantId = data.participant_id;
       localStorage.setItem("dl_participant_code", STATE.participantId);
+      persistLocalSession();
     } catch (e) {
       alert("Error connecting to server. Please ensure server is running.");
       return;
@@ -318,6 +459,7 @@ function goToJourneyStep(idx) {
   else stopActivityTimer();
 
   updateResumeButtonVisibility();
+  persistLocalSession();
 
   const container = document.getElementById("activityBody");
   container.innerHTML = "";
@@ -409,6 +551,12 @@ function renderStepConsent(container) {
       Ethical Protocol: 0 / 4 Verifications Confirmed
     </div>
   `;
+  if (STATE.consented) {
+    [1, 2, 3, 4].forEach(i => {
+      const cb = document.getElementById(`consent_${i}`);
+      if (cb) cb.checked = true;
+    });
+  }
   validateConsent();
 }
 
@@ -515,6 +663,29 @@ function renderStepProfile(container) {
       </div>
     </div>
   `;
+
+  if (STATE.profile) {
+    setTimeout(() => {
+      if (STATE.profile.level && document.getElementById("bg_qualification")) {
+        document.getElementById("bg_qualification").value = STATE.profile.level;
+      }
+      if (STATE.profile.discipline && document.getElementById("bg_status")) {
+        document.getElementById("bg_status").value = STATE.profile.discipline;
+      }
+      if (STATE.profile.experience && document.getElementById("bg_experience")) {
+        document.getElementById("bg_experience").value = STATE.profile.experience;
+      }
+      if (STATE.profile.ai_experience && document.getElementById("bg_ai_experience")) {
+        document.getElementById("bg_ai_experience").value = STATE.profile.ai_experience;
+      }
+      if (Array.isArray(STATE.profile.tools)) {
+        document.querySelectorAll("input[name='bg_tools']").forEach(cb => {
+          cb.checked = STATE.profile.tools.includes(cb.value);
+        });
+        updateToolsCount();
+      }
+    }, 10);
+  }
 }
 
 window.updateToolsCount = function() {
@@ -631,6 +802,7 @@ window.selectLikertKey = function(key, val) {
   document.getElementById(`likert_${key}_${val}`)?.classList.add("active");
   if (!STATE.responses.dependency) STATE.responses.dependency = {};
   STATE.responses.dependency[key] = val;
+  persistLocalSession();
   playChime(440 + val * 70);
 };
 
@@ -689,6 +861,20 @@ function renderStepThinking(taskIndex) {
       <div class="likert-range-endpoints"><span>1 (Low Confidence)</span><span>5 (High Confidence)</span></div>
     </div>
   `;
+
+  const savedResp = STATE.responses[task.id];
+  if (savedResp) {
+    setTimeout(() => {
+      const ta = document.getElementById(`${task.id}_text`);
+      if (ta && savedResp.answer) {
+        ta.value = savedResp.answer;
+        updateInteractiveWordMeter(ta, task.id);
+      }
+      if (savedResp.confidence) {
+        selectTaskConf(task.id, savedResp.confidence);
+      }
+    }, 10);
+  }
 }
 
 window.toggleThoughtStarters = function(taskId) {
@@ -728,6 +914,10 @@ window.updateInteractiveWordMeter = function(el, taskId) {
       statusText.style.color = "var(--accent-emerald)";
     }
   }
+
+  if (!STATE.responses[taskId]) STATE.responses[taskId] = {};
+  STATE.responses[taskId].answer = el.value;
+  persistLocalSession();
 };
 
 window.selectTaskConf = function(taskId, val) {
@@ -737,6 +927,7 @@ window.selectTaskConf = function(taskId, val) {
   document.getElementById(`${taskId}_conf_${val}`)?.classList.add("active");
   if (!STATE.responses[taskId]) STATE.responses[taskId] = {};
   STATE.responses[taskId].confidence = val;
+  persistLocalSession();
   playChime(440 + val * 70);
 };
 
@@ -787,6 +978,22 @@ function renderStepScenario(scenIndex) {
       <div class="likert-range-endpoints"><span>1 (Low Confidence)</span><span>5 (Complete Confidence)</span></div>
     </div>
   `;
+
+  const savedScen = STATE.responses[scen.id];
+  if (savedScen) {
+    setTimeout(() => {
+      if (typeof savedScen.optIndex === "number") {
+        document.getElementById(`card_${scen.id}_${savedScen.optIndex}`)?.classList.add("selected");
+      }
+      const expInput = document.getElementById(`${scen.id}_explanation`);
+      if (expInput && savedScen.explanation) {
+        expInput.value = savedScen.explanation;
+      }
+      if (savedScen.confidence) {
+        selectScenConf(scen.id, savedScen.confidence);
+      }
+    }, 10);
+  }
 }
 
 window.selectScenarioOption = function(scenId, optIdx, tag) {
@@ -795,6 +1002,7 @@ window.selectScenarioOption = function(scenId, optIdx, tag) {
   if (!STATE.responses[scenId]) STATE.responses[scenId] = {};
   STATE.responses[scenId].tag = tag;
   STATE.responses[scenId].optIndex = optIdx;
+  persistLocalSession();
   playChime(750);
 };
 
@@ -805,6 +1013,7 @@ window.selectScenConf = function(scenId, val) {
   document.getElementById(`${scenId}_conf_${val}`)?.classList.add("active");
   if (!STATE.responses[scenId]) STATE.responses[scenId] = {};
   STATE.responses[scenId].confidence = val;
+  persistLocalSession();
   playChime(440 + val * 70);
 };
 
@@ -929,8 +1138,13 @@ function renderStepConfirmation(container) {
   triggerConfetti();
 
   STATE.isSessionActive = false;
+  STATE.isCompleted = true;
   STATE.participantId = null;
+  localStorage.removeItem("dl_active_session");
   localStorage.removeItem("dl_participant_code");
+  window._pendingResume = null;
+  const banner = document.getElementById("deviceResumeBanner");
+  if (banner) banner.style.display = "none";
   updateResumeButtonVisibility();
 
   container.innerHTML = `
@@ -988,6 +1202,7 @@ async function onStepNext() {
   const idx = STATE.currentStepIndex;
 
   if (idx === 0) {
+    STATE.consented = true;
     await fetch("/api/participant/consent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -998,6 +1213,12 @@ async function onStepNext() {
     const status = document.getElementById("bg_status")?.value;
     const exp = document.getElementById("bg_experience")?.value;
     const tools = Array.from(document.querySelectorAll("input[name='bg_tools']:checked")).map(c => c.value);
+    STATE.profile = {
+      level: qual,
+      discipline: status,
+      experience: exp,
+      tools: tools
+    };
     await fetch("/api/participant/profile", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1016,6 +1237,13 @@ async function onStepNext() {
     const verifyFreq = document.getElementById("dep_verify_freq")?.value;
     const depData = STATE.responses.dependency || {};
     const overallVal = depData.overall || 3;
+    STATE.responses.dependency = {
+      ...depData,
+      frequency_usage: freq,
+      tasks_used: tasks,
+      verify_frequency: verifyFreq,
+      overall: overallVal
+    };
 
     await fetch("/api/participant/save", {
       method: "POST",
@@ -1079,6 +1307,11 @@ async function onStepNext() {
     const flagged = [1, 2, 3, 4].filter(id => document.getElementById(`verif_check_${id}`)?.checked);
     const reasoning = document.getElementById("verif_reasoning")?.value || "";
     const practice = document.getElementById("verif_practice")?.value;
+    STATE.responses.verification_activity = {
+      flagged: flagged,
+      reasoning: reasoning,
+      practice: practice
+    };
 
     await fetch("/api/participant/save", {
       method: "POST",
@@ -1101,6 +1334,12 @@ async function onStepNext() {
     const q2Text = document.getElementById("refl_q2_text")?.value;
     const q3Choice = document.getElementById("refl_q3_choice")?.value;
     const q4Text = document.getElementById("refl_q4_text")?.value;
+    STATE.responses.final_reflection = {
+      rely_more: q1Choice,
+      hardest_task: q2Text,
+      conf_changed: q3Choice,
+      avoid_advice: q4Text
+    };
 
     await fetch("/api/participant/save", {
       method: "POST",
@@ -1127,6 +1366,7 @@ async function onStepNext() {
     showSavedToast();
   }
 
+  persistLocalSession();
   goToJourneyStep(idx + 1);
 }
 
@@ -1145,7 +1385,11 @@ async function withdrawParticipantData() {
     });
     STATE.isSessionActive = false;
     STATE.participantId = null;
+    localStorage.removeItem("dl_active_session");
     localStorage.removeItem("dl_participant_code");
+    window._pendingResume = null;
+    const banner = document.getElementById("deviceResumeBanner");
+    if (banner) banner.style.display = "none";
     updateResumeButtonVisibility();
     alert("All your responses have been permanently withdrawn and erased from the dataset.");
     navigateToHome();
@@ -1163,13 +1407,37 @@ async function submitResumeSession() {
       STATE.participantId = state.participant_id;
       STATE.isSessionActive = true;
       localStorage.setItem("dl_participant_code", STATE.participantId);
+
+      let targetStep = 1;
+      if (state.responses && typeof state.responses === "object") {
+        for (const [k, v] of Object.entries(state.responses)) {
+          STATE.responses[k] = v;
+        }
+        const respCount = Object.keys(state.responses).length;
+        if (respCount > 0) {
+          targetStep = Math.min(respCount + 2, JOURNEY_STEPS.length - 2);
+        }
+      }
+      if (state.level) {
+        STATE.profile = {
+          level: state.level,
+          discipline: state.discipline,
+          experience: state.experience,
+          tools: state.tools || []
+        };
+      }
+      persistLocalSession();
       updateResumeButtonVisibility();
-      startParticipantJourney(1);
+
+      document.getElementById("landingView").style.display = "none";
+      document.getElementById("participantView").style.display = "block";
+      document.getElementById("participantCodeLabel").innerText = `${STATE.participantId} • 🔒 Confidential`;
+      goToJourneyStep(targetStep);
     } else {
       alert("Participant code not found or was previously erased.");
     }
   } catch (e) {
-    alert("Error fetching session.");
+    alert("Error fetching session. Please check your internet connection.");
   }
 }
 

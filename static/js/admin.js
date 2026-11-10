@@ -118,7 +118,7 @@ function renderOverviewTab(container, m) {
             <span>${lvl}</span>
             <span>${count} (${pct}%)</span>
           </div>
-          <div style="background: #F1F5F9; border-radius: 6px; height: 10px; overflow: hidden;">
+          <div style="background: var(--admin-border-subtle); border-radius: 6px; height: 10px; overflow: hidden;">
             <div style="width: ${pct}%; background: linear-gradient(90deg, #6D28D9 0%, #4F46E5 100%); height: 100%; border-radius: 6px;"></div>
           </div>
         </div>
@@ -202,19 +202,19 @@ function renderOverviewTab(container, m) {
       </div>
 
       <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 14px;">
-        <div style="background: #F8FAFC; border: 1px solid var(--admin-border); border-radius: 8px; padding: 12px 16px;">
+        <div style="background: var(--admin-border-subtle); border: 1px solid var(--admin-border); border-radius: 8px; padding: 12px 16px;">
           <div style="font-size: 11px; font-weight: 700; color: var(--admin-text-muted); text-transform: uppercase;">Research Battery</div>
           <div style="font-size: 15px; font-weight: 700; color: var(--admin-navy); margin-top: 2px;">8 Activities</div>
         </div>
-        <div style="background: #F8FAFC; border: 1px solid var(--admin-border); border-radius: 8px; padding: 12px 16px;">
+        <div style="background: var(--admin-border-subtle); border: 1px solid var(--admin-border); border-radius: 8px; padding: 12px 16px;">
           <div style="font-size: 11px; font-weight: 700; color: var(--admin-text-muted); text-transform: uppercase;">Target Cohorts</div>
           <div style="font-size: 15px; font-weight: 700; color: var(--admin-navy); margin-top: 2px;">UG / PG / PhD</div>
         </div>
-        <div style="background: #F8FAFC; border: 1px solid var(--admin-border); border-radius: 8px; padding: 12px 16px;">
+        <div style="background: var(--admin-border-subtle); border: 1px solid var(--admin-border); border-radius: 8px; padding: 12px 16px;">
           <div style="font-size: 11px; font-weight: 700; color: var(--admin-text-muted); text-transform: uppercase;">Autosave Engine</div>
           <div style="font-size: 15px; font-weight: 700; color: #059669; margin-top: 2px;">Active (Per-Screen)</div>
         </div>
-        <div style="background: #F8FAFC; border: 1px solid var(--admin-border); border-radius: 8px; padding: 12px 16px;">
+        <div style="background: var(--admin-border-subtle); border: 1px solid var(--admin-border); border-radius: 8px; padding: 12px 16px;">
           <div style="font-size: 11px; font-weight: 700; color: var(--admin-text-muted); text-transform: uppercase;">Export Standard</div>
           <div style="font-size: 15px; font-weight: 700; color: var(--admin-navy); margin-top: 2px;">RFC 4180 Tidy CSV</div>
         </div>
@@ -241,13 +241,13 @@ function renderOverviewTab(container, m) {
           </div>
         </div>
         <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13px; line-height: 1.5; color: var(--admin-navy-secondary);">
-          <div style="background: #F8FAFC; border: 1px solid var(--admin-border); border-radius: 8px; padding: 12px;">
+          <div style="background: var(--admin-border-subtle); border: 1px solid var(--admin-border); border-radius: 8px; padding: 12px;">
             <strong>Static Stimuli:</strong> All questions, dilemmas, and AI passages are researcher-reviewed static instruments.
           </div>
-          <div style="background: #F8FAFC; border: 1px solid var(--admin-border); border-radius: 8px; padding: 12px;">
+          <div style="background: var(--admin-border-subtle); border: 1px solid var(--admin-border); border-radius: 8px; padding: 12px;">
             <strong>Behavioral Scoring:</strong> Scenarios 1–4 measure revealed actions rather than self-serving self-declarations.
           </div>
-          <div style="background: #F8FAFC; border: 1px solid var(--admin-border); border-radius: 8px; padding: 12px;">
+          <div style="background: var(--admin-border-subtle); border: 1px solid var(--admin-border); border-radius: 8px; padding: 12px;">
             <strong>GDPR Compliance:</strong> Participants can withdraw and permanently purge their responses via anonymous code.
           </div>
         </div>
@@ -304,7 +304,7 @@ function renderDependencyTab(container, m) {
           <span>${t.task}</span>
           <span>${t.count} researchers (${pct}%)</span>
         </div>
-        <div style="background: #F1F5F9; border-radius: 6px; height: 10px; overflow: hidden;">
+        <div style="background: var(--admin-border-subtle); border-radius: 6px; height: 10px; overflow: hidden;">
           <div style="width: ${pct}%; background: linear-gradient(90deg, #6D28D9 0%, #8B5CF6 100%); height: 100%; border-radius: 6px;"></div>
         </div>
       </div>
@@ -376,7 +376,7 @@ function renderDependencyTab(container, m) {
 
         <!-- Metric Details -->
         <div style="display: flex; flex-direction: column; gap: 14px;">
-          <div style="background: #F8FAFC; border: 1px solid var(--admin-border); border-radius: 10px; padding: 18px;">
+          <div style="background: var(--admin-border-subtle); border: 1px solid var(--admin-border); border-radius: 10px; padding: 18px;">
             <div style="font-size: 12px; font-weight: 700; color: var(--admin-text-muted); text-transform: uppercase;">Mean Self-Reported Dependency</div>
             <div style="font-size: 28px; font-weight: 800; color: var(--admin-purple); margin-top: 4px;">
               ${d.mean_overall_dependency || '0.0'} <span style="font-size: 16px; font-weight: 500; color: var(--admin-text-muted);">/ 5.0</span>
@@ -384,7 +384,7 @@ function renderDependencyTab(container, m) {
             <div style="font-size: 12px; color: var(--admin-text-muted); margin-top: 4px;">Baseline self-perception rating</div>
           </div>
 
-          <div style="background: #F8FAFC; border: 1px solid var(--admin-border); border-radius: 10px; padding: 18px;">
+          <div style="background: var(--admin-border-subtle); border: 1px solid var(--admin-border); border-radius: 10px; padding: 18px;">
             <div style="font-size: 12px; font-weight: 700; color: var(--admin-text-muted); text-transform: uppercase;">Confidence Without AI</div>
             <div style="font-size: 28px; font-weight: 800; color: #059669; margin-top: 4px;">
               ${d.mean_conf_without_ai || '0.0'} <span style="font-size: 16px; font-weight: 500; color: var(--admin-text-muted);">/ 5.0</span>
@@ -392,7 +392,7 @@ function renderDependencyTab(container, m) {
             <div style="font-size: 12px; color: var(--admin-text-muted); margin-top: 4px;">Confidence in working completely unassisted</div>
           </div>
 
-          <div style="background: #F8FAFC; border: 1px solid var(--admin-border); border-radius: 10px; padding: 18px;">
+          <div style="background: var(--admin-border-subtle); border: 1px solid var(--admin-border); border-radius: 10px; padding: 18px;">
             <div style="font-size: 12px; font-weight: 700; color: var(--admin-text-muted); text-transform: uppercase;">Independent Formulation Difficulty</div>
             <div style="font-size: 28px; font-weight: 800; color: #D97706; margin-top: 4px;">
               ${d.mean_formulate_difficulty || '0.0'} <span style="font-size: 16px; font-weight: 500; color: var(--admin-text-muted);">/ 5.0</span>
@@ -529,7 +529,7 @@ function renderScenarioBox(title, counts) {
           <span>${labels[tag]}</span>
           <span>${c} (${pct}%)</span>
         </div>
-        <div style="background: #F1F5F9; border-radius: 4px; height: 8px; overflow: hidden;">
+        <div style="background: var(--admin-border-subtle); border-radius: 4px; height: 8px; overflow: hidden;">
           <div style="width: ${pct}%; background: ${color}; height: 100%; border-radius: 4px;"></div>
         </div>
       </div>
@@ -572,7 +572,7 @@ function renderVerificationTab(container, m) {
         </div>
       </div>
 
-      <div style="background: #F8FAFC; border: 1px solid var(--admin-border); border-radius: 10px; padding: 20px; margin-top: 16px;">
+      <div style="background: var(--admin-border-subtle); border: 1px solid var(--admin-border); border-radius: 10px; padding: 20px; margin-top: 16px;">
         <h4 style="font-size: 14.5px; font-weight: 700; color: var(--admin-navy); margin-bottom: 8px;">Predefined Methodological Answer Key</h4>
         <ul style="padding-left: 20px; font-size: 13.5px; color: #475569; line-height: 1.6;">
           <li><strong>Planted Error 1 (Sentence 2):</strong> Falsely asserts purposive sampling is a probability method where every person has an equal selection chance.</li>

@@ -1,7 +1,10 @@
 /*
   Dependency Lab: Researcher Admin & Analytical Command Center
-  Flagship Mobile-First Product Architecture & Responsive Foundation
+  Protocol: DL-2026 • Intellectual Autonomy & Generative AI Research
+  Color Grading & Typography System
 */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 :root {
   /* Safe Area Insets */
@@ -19,21 +22,29 @@
   --space-6: 1.5rem;   /* 24px */
   --space-8: 2rem;     /* 32px */
 
-  /* Palette */
-  --admin-bg: #F8FAFC;
+  /* Academic Color Palette & Grading */
+  --admin-bg: #FAF8FF;
   --admin-card: #FFFFFF;
-  --admin-navy: #0B192C;
-  --admin-navy-secondary: #1E293B;
+  --admin-navy: #0A192F;
+  --admin-navy-secondary: #334155;
   --admin-purple: #6D28D9;
+  --admin-purple-hover: #5B21B6;
   --admin-purple-light: #EDE8FA;
-  --admin-coral: #F2713B;
-  --admin-border: #E2E8F0;
-  --admin-border-subtle: #F1F5F9;
-  --admin-text-main: #0F172A;
+  --admin-purple-tint: #F5F1FD;
+  --admin-purple-glow: rgba(109, 40, 217, 0.18);
+  --admin-coral: #6D28D9;
+  --admin-border: #E8E2F4;
+  --admin-border-subtle: #F6F3FC;
+  --admin-text-main: #0A192F;
+  --admin-text-secondary: #334155;
   --admin-text-muted: #64748B;
   --admin-emerald: #059669;
+  --admin-emerald-bg: #ECFDF5;
+  --admin-amber: #D97706;
+  --admin-amber-bg: #FFFBEB;
 
   /* Typography */
+  --font-serif: 'Fraunces', Georgia, serif;
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
@@ -396,20 +407,25 @@ body.admin-body {
 .kpi-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-3);
+  gap: var(--space-4);
   margin-bottom: var(--space-5);
 }
 
 .kpi-card {
   background: var(--admin-card);
   border: 1px solid var(--admin-border);
-  border-radius: 12px;
-  padding: var(--space-4);
-  box-shadow: 0 2px 10px rgba(11, 25, 44, 0.03);
+  border-radius: 14px;
+  padding: var(--space-5);
+  box-shadow: 0 4px 20px -2px rgba(109, 40, 217, 0.05), 0 2px 6px -1px rgba(10, 25, 47, 0.04);
   position: relative;
   overflow: hidden;
   transition: transform 0.2s, box-shadow 0.2s;
   min-width: 0;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgba(109, 40, 217, 0.1), 0 3px 8px -1px rgba(10, 25, 47, 0.06);
 }
 
 .kpi-card::before {
@@ -418,49 +434,50 @@ body.admin-body {
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 3.5px;
   background: var(--admin-border);
 }
 
 .kpi-card:nth-child(1)::before { background: var(--admin-purple); }
 .kpi-card:nth-child(2)::before { background: #059669; }
 .kpi-card:nth-child(3)::before { background: #D97706; }
-.kpi-card:nth-child(4)::before { background: #2563EB; }
+.kpi-card:nth-child(4)::before { background: #4F46E5; }
 
 .kpi-label {
   font-size: 11.5px;
   font-weight: 700;
   color: var(--admin-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   margin-bottom: var(--space-1);
 }
 
 .kpi-number {
-  font-size: clamp(1.5rem, 2.5vw + 0.5rem, 2rem);
+  font-size: clamp(1.75rem, 2.5vw + 0.5rem, 2.25rem);
   font-weight: 800;
   color: var(--admin-navy);
   line-height: 1.1;
+  letter-spacing: -0.02em;
   font-family: var(--font-sans);
 }
 
 .kpi-sub {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--admin-text-muted);
   margin-top: var(--space-1);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 }
 
 /* Section Cards */
 .admin-card {
   background: var(--admin-card);
   border: 1px solid var(--admin-border);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: var(--space-5);
   margin-bottom: var(--space-4);
-  box-shadow: 0 2px 10px rgba(11, 25, 44, 0.03);
+  box-shadow: 0 4px 20px -2px rgba(109, 40, 217, 0.04), 0 2px 6px -1px rgba(10, 25, 47, 0.03);
   min-width: 0;
 }
 
@@ -474,41 +491,73 @@ body.admin-body {
 }
 
 .admin-card-title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--admin-navy);
+  letter-spacing: -0.01em;
 }
 
 .admin-card-subtitle {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--admin-text-muted);
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 /* Data Tables */
 .admin-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 13.5px;
   min-width: 580px; /* Horizontal scroll wrapper handles overflow */
 }
 
 .admin-table th {
   text-align: left;
   padding: var(--space-3) var(--space-4);
-  background: var(--admin-border-subtle);
-  color: var(--admin-text-muted);
+  background: #F8F6FD;
+  color: var(--admin-navy-secondary);
   font-weight: 700;
   border-bottom: 1.5px solid var(--admin-border);
   text-transform: uppercase;
   font-size: 11px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 
 .admin-table td {
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--admin-border);
+  border-bottom: 1px solid var(--admin-border-subtle);
   color: var(--admin-text-main);
+}
+
+.admin-table tr:hover td {
+  background: var(--admin-border-subtle);
+}
+
+/* Status Badges */
+.status-pill-completed {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--admin-emerald-bg);
+  color: var(--admin-emerald);
+  border: 1px solid #A7F3D0;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.status-pill-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--admin-amber-bg);
+  color: var(--admin-amber);
+  border: 1px solid #FDE68A;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 700;
 }
 
 /* Empty State / Listening Radar Card */

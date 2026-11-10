@@ -11,7 +11,7 @@ import json
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 
-from fastapi import FastAPI, HTTPException, Query, Response, status
+from fastapi import FastAPI, HTTPException, Query, Response, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, PlainTextResponse
@@ -28,6 +28,18 @@ app = FastAPI(
     description="Empirical Research Platform on Generative AI Dependency & Intellectual Autonomy",
     version="1.0.0"
 )
+
+# Helper to reliably resolve client IP for session continuity
+def get_client_ip(request: Request) -> str:
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip.strip()
+    if request.client and request.client.host:
+        return request.client.host
+    return "127.0.0.1"
 
 # Enable CORS for local development and embedded browsers
 app.add_middleware(
@@ -65,6 +77,13 @@ class CompleteRequest(BaseModel):
 class WithdrawRequest(BaseModel):
     participant_id: str
 
+class SyncSessionRequest(BaseModel):
+    participant_id: str
+    current_step: Optional[int] = None
+    profile: Optional[Dict[str, Any]] = None
+    responses: Optional[Dict[str, Any]] = None
+    completed: Optional[bool] = False
+
 class ThemeTagRequest(BaseModel):
     participant_id: str
     activity_id: str
@@ -77,9 +96,28 @@ def health_check():
     return {"status": "ok", "app": "Dependency Lab", "timestamp": datetime.utcnow().isoformat() + "Z"}
 
 @app.post("/api/participant/start")
-def start_session():
-    code = database.create_participant()
-    return {"participant_id": code, "status": "started"}
+def start_session(request: Request):
+    client_ip = get_client_ip(request)
+    code = database.create_participant(ip_address=client_ip)
+    return {"participant_id": code, "ip": client_ip, "status": "started"}
+
+@app.get("/api/participant/resume-by-device")
+def resume_by_device(request: Request):
+    client_ip = get_client_ip(request)
+    active = database.get_active_participant_by_ip(client_ip)
+    if active:
+        return {"found": True, "state": active, "ip": client_ip}
+    return {"found": False, "ip": client_ip}
+
+@app.post("/api/participant/sync-session")
+def sync_session(req: SyncSessionRequest, request: Request):
+    client_ip = get_client_ip(request)
+    state = database.sync_or_restore_participant(
+        participant_id=req.participant_id,
+        ip_address=client_ip,
+        state_data={"profile": req.profile, "responses": req.responses, "completed": req.completed}
+    )
+    return {"status": "synced", "state": state}
 
 @app.post("/api/participant/consent")
 def submit_consent(req: ConsentRequest):
@@ -117,10 +155,12 @@ def complete_study(req: CompleteRequest):
     return {"status": "completed", "participant_id": req.participant_id}
 
 @app.get("/api/participant/state/{participant_id}")
-def get_state(participant_id: str):
+def get_state(participant_id: str, request: Request):
     state = database.get_participant_state(participant_id)
     if not state:
-        raise HTTPException(status_code=404, detail="Session not found or withdrawn")
+        # Fallback to restore / ensure participant exists on serverless container switch
+        client_ip = get_client_ip(request)
+        state = database.sync_or_restore_participant(participant_id, ip_address=client_ip)
     return state
 
 @app.post("/api/participant/withdraw")

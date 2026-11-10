@@ -27,10 +27,11 @@ def init_db():
     conn = get_connection()
     cursor = conn.cursor()
     
-    # Participants table
+    # Participants table (includes IP tracking for device session continuity)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS participants (
         participant_id TEXT PRIMARY KEY,
+        ip_address TEXT,
         created_at TEXT NOT NULL,
         consent_at TEXT,
         level TEXT,
@@ -41,6 +42,12 @@ def init_db():
         completed_at TEXT
     )
     """)
+    
+    # Migrate existing database if column missing
+    try:
+        cursor.execute("ALTER TABLE participants ADD COLUMN ip_address TEXT")
+    except Exception:
+        pass
     
     # Responses table (one record per activity per participant, overwrites on re-submit)
     cursor.execute("""
@@ -81,18 +88,96 @@ def generate_participant_code() -> str:
     suffix = "".join(random.choices(chars, k=6))
     return f"DL-{suffix}"
 
-def create_participant() -> str:
+def create_participant(ip_address: Optional[str] = None) -> str:
     code = generate_participant_code()
     conn = get_connection()
     cursor = conn.cursor()
     now = datetime.utcnow().isoformat() + "Z"
     cursor.execute(
-        "INSERT INTO participants (participant_id, created_at) VALUES (?, ?)",
-        (code, now)
+        "INSERT INTO participants (participant_id, ip_address, created_at) VALUES (?, ?, ?)",
+        (code, ip_address, now)
     )
     conn.commit()
     conn.close()
     return code
+
+def get_active_participant_by_ip(ip_address: str) -> Optional[Dict[str, Any]]:
+    if not ip_address:
+        return None
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT participant_id FROM participants WHERE ip_address = ? AND completed = 0 ORDER BY created_at DESC LIMIT 1",
+        (ip_address,)
+    )
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        return None
+    return get_participant_state(row["participant_id"])
+
+def sync_or_restore_participant(
+    participant_id: str,
+    ip_address: Optional[str] = None,
+    state_data: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    """
+    Ensures participant exists even across serverless cold starts / container switches.
+    Restores profile and responses if passed by client autosave.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM participants WHERE participant_id = ?", (participant_id,))
+    row = cursor.fetchone()
+    now = datetime.utcnow().isoformat() + "Z"
+    
+    if not row:
+        cursor.execute(
+            "INSERT INTO participants (participant_id, ip_address, created_at) VALUES (?, ?, ?)",
+            (participant_id, ip_address, now)
+        )
+        conn.commit()
+    elif ip_address and not row["ip_address"]:
+        cursor.execute(
+            "UPDATE participants SET ip_address = ? WHERE participant_id = ?",
+            (ip_address, participant_id)
+        )
+        conn.commit()
+        
+    if state_data:
+        profile = state_data.get("profile")
+        if profile and isinstance(profile, dict):
+            cursor.execute("""
+                UPDATE participants 
+                SET level = ?, discipline = ?, experience = ?, tools = ?
+                WHERE participant_id = ?
+            """, (
+                profile.get("level"), profile.get("discipline"),
+                profile.get("experience"), json.dumps(profile.get("tools", [])),
+                participant_id
+            ))
+            conn.commit()
+            
+        responses = state_data.get("responses", {})
+        if responses and isinstance(responses, dict):
+            for act_id, resp in responses.items():
+                if isinstance(resp, dict):
+                    cursor.execute("""
+                        INSERT OR REPLACE INTO responses 
+                        (participant_id, activity_id, answer, explanation, confidence, difficulty, time_ms, data_json, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        participant_id, act_id,
+                        resp.get("answer"), resp.get("explanation"),
+                        resp.get("confidence"), resp.get("difficulty"),
+                        resp.get("time_ms", 0),
+                        json.dumps(resp.get("data")) if resp.get("data") else None,
+                        now
+                    ))
+            conn.commit()
+            
+    conn.close()
+    return get_participant_state(participant_id)
 
 def record_consent(participant_id: str) -> bool:
     conn = get_connection()
