@@ -968,8 +968,8 @@ textarea.field-control-text {
 }
 
 .key-cap {
-  background: white;
-  border: 1px solid #CBD5E1;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-lavender);
   padding: 1px 6px;
   border-radius: 4px;
   font-family: var(--font-mono);

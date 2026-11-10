@@ -439,20 +439,34 @@ function goToJourneyStep(idx) {
   const cheerMsg = CHEER_MESSAGES[idx] || "Great momentum! Keep going.";
   document.getElementById("cheerMessage").innerText = cheerMsg;
 
-  // Header Title
-  document.getElementById("stepBackBtn").disabled = idx === 0 || idx === JOURNEY_STEPS.length - 1;
-
-  // Next Button Label
+  // Navigation buttons & helpers visibility
+  const backBtn = document.getElementById("stepBackBtn");
   const nextBtn = document.getElementById("stepNextBtn");
-  if (idx === 0) {
-    document.getElementById("stepNextBtnText").innerText = "I Consent & Begin";
-  } else if (idx === JOURNEY_STEPS.length - 2) {
-    document.getElementById("stepNextBtnText").innerText = "Submit All Responses";
-  } else if (idx === JOURNEY_STEPS.length - 1) {
-    nextBtn.style.display = "none";
+  const autoSaveText = document.getElementById("footerAutoSaveText");
+  const keyboardPill = document.querySelector(".keyboard-hint-pill");
+
+  if (idx === JOURNEY_STEPS.length - 1) {
+    if (backBtn) backBtn.style.display = "none";
+    if (nextBtn) nextBtn.style.display = "none";
+    if (autoSaveText) autoSaveText.style.display = "none";
+    if (keyboardPill) keyboardPill.style.display = "none";
   } else {
-    nextBtn.style.display = "inline-flex";
-    document.getElementById("stepNextBtnText").innerText = "Continue";
+    if (backBtn) {
+      backBtn.style.display = "inline-flex";
+      backBtn.disabled = idx === 0;
+    }
+    if (autoSaveText) autoSaveText.style.display = "inline";
+    if (keyboardPill) keyboardPill.style.display = "";
+    if (nextBtn) {
+      nextBtn.style.display = "inline-flex";
+      if (idx === 0) {
+        document.getElementById("stepNextBtnText").innerText = "I Consent & Begin";
+      } else if (idx === JOURNEY_STEPS.length - 2) {
+        document.getElementById("stepNextBtnText").innerText = "Submit All Responses";
+      } else {
+        document.getElementById("stepNextBtnText").innerText = "Continue";
+      }
+    }
   }
 
   if (step.timer) startActivityTimer();
@@ -1137,6 +1151,9 @@ function renderStepConfirmation(container) {
   // Fire celebratory confetti!
   triggerConfetti();
 
+  const confirmedCode = STATE.participantId || STATE.completedParticipantId || localStorage.getItem("dl_participant_code") || "DL-COMPLETED";
+  STATE.completedParticipantId = confirmedCode;
+
   STATE.isSessionActive = false;
   STATE.isCompleted = true;
   STATE.participantId = null;
@@ -1146,6 +1163,16 @@ function renderStepConfirmation(container) {
   const banner = document.getElementById("deviceResumeBanner");
   if (banner) banner.style.display = "none";
   updateResumeButtonVisibility();
+
+  // Hide bottom navigation & keyboard shortcuts on confirmation view
+  const backBtn = document.getElementById("stepBackBtn");
+  const nextBtn = document.getElementById("stepNextBtn");
+  const autoSaveText = document.getElementById("footerAutoSaveText");
+  const keyboardPill = document.querySelector(".keyboard-hint-pill");
+  if (backBtn) backBtn.style.display = "none";
+  if (nextBtn) nextBtn.style.display = "none";
+  if (autoSaveText) autoSaveText.style.display = "none";
+  if (keyboardPill) keyboardPill.style.display = "none";
 
   container.innerHTML = `
     <div style="text-align: center; padding: 20px 0;">
@@ -1165,25 +1192,25 @@ function renderStepConfirmation(container) {
         <span style="font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-navy-muted); display: block; margin-bottom: 6px;">
           Anonymous Submission Confirmation Code
         </span>
-        <div style="font-family: var(--font-mono); font-size: 26px; font-weight: 700; color: var(--text-navy); letter-spacing: 0.06em;">
-          ${STATE.participantId}
+        <div style="font-family: var(--font-mono); font-size: 28px; font-weight: 800; color: var(--accent-purple); letter-spacing: 0.06em;">
+          ${confirmedCode}
         </div>
         <p style="font-size: 12px; color: var(--text-navy-muted); margin-top: 6px;">
           Please retain this code for reference or if you wish to exercise your ethical right to withdraw your data.
         </p>
-        <button class="btn btn-outline" style="margin-top: 14px; padding: 8px 18px; font-size: 13px;" onclick="navigator.clipboard.writeText('${STATE.participantId}'); alert('Code copied to clipboard: ' + '${STATE.participantId}')">
+        <button class="btn btn-outline" style="margin-top: 14px; padding: 8px 18px; font-size: 13px;" onclick="navigator.clipboard.writeText('${confirmedCode}'); alert('Code copied to clipboard: ' + '${confirmedCode}')">
           Copy Confirmation Code 📋
         </button>
       </div>
 
-      <div style="background: white; border: 1px solid var(--border-restrained); border-radius: var(--radius-md); padding: 22px; text-align: left; max-width: 600px; margin: 0 auto 30px;">
+      <div style="background: var(--bg-surface); border: 1px solid var(--border-lavender); border-radius: var(--radius-md); padding: 22px; text-align: left; max-width: 600px; margin: 0 auto 30px; box-shadow: var(--shadow-subtle);">
         <h4 style="font-size: 14.5px; font-weight: 700; color: var(--text-navy); margin-bottom: 8px;">Methodological Debrief</h4>
         <p style="font-size: 13.5px; color: var(--text-navy-secondary); line-height: 1.6;">
           <strong>Content Verification Note:</strong> The passage in Activity 6 contained three deliberately planted errors: (1) Purposive sampling was mislabelled as a probability method; (2) Findings were falsely claimed to possess generalizability to the entire population; and (3) An arbitrary minimum of 1,000 subjects was asserted. This activity tests whether scholars critically scrutinize fluent AI-generated text.
         </p>
       </div>
 
-      <div style="display: flex; justify-content: center; gap: 14px;">
+      <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
         <button class="btn btn-outline" style="color: var(--accent-crimson); border-color: #FECACA;" onclick="withdrawParticipantData()">
           Withdraw & Erase My Submission
         </button>
@@ -1377,14 +1404,21 @@ function onStepBack() {
 }
 
 async function withdrawParticipantData() {
-  if (confirm("Warning: This will permanently erase all your submitted responses from the research database. This action is irreversible. Do you wish to proceed?")) {
+  const codeToWithdraw = STATE.participantId || STATE.completedParticipantId || localStorage.getItem("dl_participant_code");
+  if (!codeToWithdraw) {
+    alert("No active session code found to withdraw.");
+    navigateToHome();
+    return;
+  }
+  if (confirm(`Warning: This will permanently erase all submitted responses for ${codeToWithdraw} from the research database. This action is irreversible. Do you wish to proceed?`)) {
     await fetch("/api/participant/withdraw", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ participant_id: STATE.participantId })
+      body: JSON.stringify({ participant_id: codeToWithdraw })
     });
     STATE.isSessionActive = false;
     STATE.participantId = null;
+    STATE.completedParticipantId = null;
     localStorage.removeItem("dl_active_session");
     localStorage.removeItem("dl_participant_code");
     window._pendingResume = null;
