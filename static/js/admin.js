@@ -65,6 +65,9 @@ async function refreshAdminData() {
   const level = document.getElementById("filterLevel")?.value || "all";
   const exp = document.getElementById("filterExp")?.value || "all";
 
+  // Auto-sync any completed or saved sessions from local browser vault
+  await syncBrowserVaultSilently();
+
   // Update status badge
   const filterBadge = document.getElementById("filterStatusBadge");
   if (filterBadge) {
@@ -88,6 +91,8 @@ async function refreshAdminData() {
     const sideCompleted = document.getElementById("sideCompletedCount");
     const sideSync = document.getElementById("sideLastSyncTime");
     const vaultText = document.getElementById("vaultStatusText");
+    const sideEngine = document.getElementById("sideStorageEngine");
+    const sideActive = document.getElementById("sideActiveStorage");
 
     if (sideEnrolled) sideEnrolled.innerText = m.total_started;
     if (sideCompleted) sideCompleted.innerText = m.total_completed;
@@ -97,6 +102,10 @@ async function refreshAdminData() {
     }
     if (vaultText) {
       vaultText.innerText = `Live Data Vault (${m.total_started} Enrolled • Zero AI Models)`;
+    }
+    if (m.storage_info) {
+      if (sideEngine) sideEngine.innerText = m.storage_info.engine;
+      if (sideActive) sideActive.innerText = m.storage_info.badge || m.storage_info.type;
     }
 
     renderActiveTab();
@@ -737,11 +746,11 @@ function renderExportsTab(container, m) {
       <div class="admin-card-header">
         <div>
           <div class="admin-card-title">Research Data Vault & Export Center</div>
-          <div class="admin-card-subtitle">Export tidy datasets ready for SPSS, R, Python pandas, and Excel</div>
+          <div class="admin-card-subtitle">Export tidy datasets ready for SPSS, R, Python pandas, and Excel, or import external submissions</div>
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 14px;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 14px;">
         <div style="border: 1px solid var(--admin-border); border-radius: 12px; padding: 24px; background: var(--admin-card); box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
           <h4 style="font-size: 15px; font-weight: 700; color: var(--admin-navy); margin-bottom: 8px;">Long-Format Tidy CSV</h4>
           <p style="font-size: 13.5px; color: var(--admin-text-muted); line-height: 1.55; margin-bottom: 18px;">
@@ -761,6 +770,16 @@ function renderExportsTab(container, m) {
             Download Raw JSON Archive 📦
           </button>
         </div>
+
+        <div style="border: 1px solid var(--admin-border); border-radius: 12px; padding: 24px; background: var(--admin-card); box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
+          <h4 style="font-size: 15px; font-weight: 700; color: var(--admin-navy); margin-bottom: 8px;">Import Participant Submissions</h4>
+          <p style="font-size: 13.5px; color: var(--admin-text-muted); line-height: 1.55; margin-bottom: 18px;">
+            Merge offline participant receipts or past database backups into this live research instance.
+          </p>
+          <button class="btn-admin btn-admin-outline" onclick="openImportModal()">
+            Import Submissions (.json) 📥
+          </button>
+        </div>
       </div>
     </div>
   `;
@@ -773,6 +792,164 @@ function downloadCSVExport() {
 function downloadJSONArchive() {
   window.location.href = "/api/export/json";
 }
+
+// ----------------------------------------------------------------------
+// BROWSER VAULT & CLOUD SYNC HELPERS
+// ----------------------------------------------------------------------
+function getLocalVaultSubmissions() {
+  let submissions = [];
+  const vaultStr = localStorage.getItem("dl_vault_submissions");
+  if (vaultStr) {
+    try {
+      const vault = JSON.parse(vaultStr);
+      submissions = Object.values(vault);
+    } catch (e) {}
+  }
+  const lastSubStr = localStorage.getItem("dl_last_submission");
+  if (lastSubStr) {
+    try {
+      const lastSub = JSON.parse(lastSubStr);
+      const pid = lastSub.participant_id || lastSub.participantId;
+      if (pid && !submissions.some(s => (s.participant_id || s.participantId) === pid)) {
+        submissions.push(lastSub);
+      }
+    } catch (e) {}
+  }
+  return submissions;
+}
+
+async function syncBrowserVaultSilently() {
+  const subs = getLocalVaultSubmissions();
+  const dot = document.getElementById("syncVaultDot");
+  if (dot) dot.style.display = subs.length > 0 ? "inline-block" : "none";
+
+  if (subs.length === 0) return;
+
+  try {
+    await fetch("/api/admin/sync-vault", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ submissions: subs })
+    });
+  } catch (err) {
+    console.warn("Silent vault sync error:", err);
+  }
+}
+
+window.manualSyncVault = async function() {
+  const subs = getLocalVaultSubmissions();
+  if (subs.length === 0) {
+    alert("No local participant sessions found in this browser's vault.\n\nAny participant who completes the research study on this device will be automatically cached and synced here.");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/admin/sync-vault", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ submissions: subs })
+    });
+    const data = await res.json();
+    alert(`Successfully synced ${data.synced_count} participant submission(s) from local vault to active database!`);
+    refreshAdminData();
+  } catch (err) {
+    alert("Error syncing vault: " + err.message);
+  }
+};
+
+window.openImportModal = function() {
+  const modal = document.getElementById("importModal");
+  if (modal) {
+    modal.style.display = "flex";
+    const statusMsg = document.getElementById("importStatusMsg");
+    if (statusMsg) {
+      statusMsg.style.display = "none";
+      statusMsg.innerText = "";
+    }
+    const input = document.getElementById("importJsonFileInput");
+    if (input) input.value = "";
+    const textarea = document.getElementById("importJsonPasteText");
+    if (textarea) textarea.value = "";
+  }
+};
+
+window.closeImportModal = function() {
+  const modal = document.getElementById("importModal");
+  if (modal) modal.style.display = "none";
+};
+
+let _parsedImportData = null;
+
+window.handleImportFileSelect = function(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      _parsedImportData = JSON.parse(e.target.result);
+      const statusMsg = document.getElementById("importStatusMsg");
+      if (statusMsg) {
+        statusMsg.style.display = "block";
+        statusMsg.style.color = "#059669";
+        statusMsg.innerText = `✓ Loaded "${file.name}" successfully. Click "Import Submissions" to merge.`;
+      }
+    } catch (err) {
+      alert("Invalid JSON file: " + err.message);
+      _parsedImportData = null;
+    }
+  };
+  reader.readAsText(file);
+};
+
+window.executeImportSubmissions = async function() {
+  let toImport = _parsedImportData;
+  const pasteVal = document.getElementById("importJsonPasteText")?.value.trim();
+  if (!toImport && pasteVal) {
+    try {
+      toImport = JSON.parse(pasteVal);
+    } catch (err) {
+      alert("Invalid JSON in text area: " + err.message);
+      return;
+    }
+  }
+
+  if (!toImport) {
+    alert("Please select a JSON file or paste valid submission JSON.");
+    return;
+  }
+
+  let subs = [];
+  if (Array.isArray(toImport)) {
+    subs = toImport;
+  } else if (toImport.participants && Array.isArray(toImport.participants)) {
+    subs = toImport.participants;
+  } else if (toImport.submissions && Array.isArray(toImport.submissions)) {
+    subs = toImport.submissions;
+  } else if (toImport.participant_id || toImport.participantId) {
+    subs = [toImport];
+  } else {
+    subs = Object.values(toImport).filter(v => v && (v.participant_id || v.participantId));
+  }
+
+  if (subs.length === 0) {
+    alert("No valid participant records found in JSON.");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/admin/sync-vault", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ submissions: subs })
+    });
+    const data = await res.json();
+    alert(`Import Complete: ${data.synced_count} participant record(s) merged into research vault!`);
+    closeImportModal();
+    refreshAdminData();
+  } catch (err) {
+    alert("Import failed: " + err.message);
+  }
+};
 
 function confirmPurgeDatabase() {
   document.getElementById("purgeModal").style.display = "flex";

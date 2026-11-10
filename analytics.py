@@ -10,13 +10,14 @@ Aggregates participant responses for academic research on AI dependency:
 
 import json
 from typing import Dict, Any, List, Optional
+import database
 from database import get_connection
 
 def compute_metrics(filter_level: str = None, filter_exp: str = None) -> Dict[str, Any]:
     conn = get_connection()
     cursor = conn.cursor()
     
-    query = "SELECT * FROM participants WHERE consent_at IS NOT NULL"
+    query = "SELECT * FROM participants WHERE consent_at IS NOT NULL OR completed = 1"
     params = []
     if filter_level and filter_level != "all":
         query += " AND level = ?"
@@ -35,7 +36,8 @@ def compute_metrics(filter_level: str = None, filter_exp: str = None) -> Dict[st
             "total_started": 0, "total_completed": 0, "completion_rate": 0,
             "levels_breakdown": {}, "perceived_vs_behavioral": [],
             "scenario_stats": {}, "flaw_stats": {}, "dependency_stats": {},
-            "think_stats": {}, "reflection_stats": {}
+            "think_stats": {}, "reflection_stats": {},
+            "storage_info": database.get_active_storage_info()
         }
     
     placeholders = ",".join("?" * len(p_ids))
@@ -241,5 +243,6 @@ def compute_metrics(filter_level: str = None, filter_exp: str = None) -> Dict[st
         "flaw_stats": flaw_stats,
         "dependency_stats": dependency_stats,
         "think_task_stats": think_task_stats,
-        "reflection_stats": reflection_stats
+        "reflection_stats": reflection_stats,
+        "storage_info": database.get_active_storage_info()
     }

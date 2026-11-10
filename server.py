@@ -90,6 +90,10 @@ class ThemeTagRequest(BaseModel):
     theme_tag: str
     notes: Optional[str] = ""
 
+class SyncVaultRequest(BaseModel):
+    submissions: Optional[List[Dict[str, Any]]] = None
+    submission: Optional[Dict[str, Any]] = None
+
 # API Endpoints
 @app.get("/api/health")
 def health_check():
@@ -277,6 +281,39 @@ def reset_all_data():
     conn.commit()
     conn.close()
     return {"status": "reset", "message": "Database cleared."}
+
+@app.post("/api/admin/sync-vault")
+def sync_vault_submissions(req: SyncVaultRequest):
+    subs = []
+    if req.submissions:
+        subs.extend(req.submissions)
+    if req.submission:
+        subs.append(req.submission)
+        
+    synced_count = 0
+    for s in subs:
+        if database.import_or_sync_submission(s):
+            synced_count += 1
+            
+    return {
+        "status": "success",
+        "synced_count": synced_count,
+        "metrics": analytics.compute_metrics(),
+        "storage_info": database.get_active_storage_info()
+    }
+
+@app.get("/api/admin/backup-vault")
+def backup_vault():
+    participants, responses, codes = database.get_all_participants_data()
+    return {
+        "protocol": "DL-2026",
+        "exported_at": datetime.utcnow().isoformat() + "Z",
+        "storage_info": database.get_active_storage_info(),
+        "total_participants": len(participants),
+        "participants": participants,
+        "responses": responses,
+        "qualitative_codes": codes
+    }
 
 # Data Export Endpoints
 @app.get("/api/export/csv")

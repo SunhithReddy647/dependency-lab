@@ -164,10 +164,44 @@ document.addEventListener("DOMContentLoaded", () => {
   checkForDeviceSession();
 });
 
+function saveSubmissionToVault(isFinal = false) {
+  const pid = STATE.participantId || STATE.completedParticipantId || localStorage.getItem("dl_participant_code");
+  if (!pid) return;
+
+  const snapshot = {
+    participant_id: pid,
+    created_at: new Date().toISOString(),
+    consent_at: STATE.consented ? new Date().toISOString() : null,
+    level: STATE.profile?.level || null,
+    discipline: STATE.profile?.discipline || null,
+    experience: STATE.profile?.experience || null,
+    tools: STATE.profile?.tools || [],
+    completed: Boolean(isFinal || STATE.isCompleted),
+    completed_at: (isFinal || STATE.isCompleted) ? new Date().toISOString() : null,
+    responses: STATE.responses || {},
+    updated_at: new Date().toISOString()
+  };
+
+  try {
+    let vault = {};
+    const existing = localStorage.getItem("dl_vault_submissions");
+    if (existing) {
+      try { vault = JSON.parse(existing); } catch (e) {}
+    }
+    vault[pid] = snapshot;
+    localStorage.setItem("dl_vault_submissions", JSON.stringify(vault));
+    localStorage.setItem("dl_last_submission", JSON.stringify(snapshot));
+    localStorage.setItem("dl_last_completed_code", pid);
+  } catch (e) {
+    console.warn("Vault local storage write error:", e);
+  }
+}
+
 function persistLocalSession() {
-  if (!STATE.participantId || STATE.isCompleted) return;
+  if (!STATE.participantId && !STATE.completedParticipantId) return;
+  const pid = STATE.participantId || STATE.completedParticipantId;
   const payload = {
-    participantId: STATE.participantId,
+    participantId: pid,
     currentStepIndex: STATE.currentStepIndex,
     responses: STATE.responses,
     profile: STATE.profile || null,
@@ -176,8 +210,10 @@ function persistLocalSession() {
   };
   try {
     localStorage.setItem("dl_active_session", JSON.stringify(payload));
-    localStorage.setItem("dl_participant_code", STATE.participantId);
+    localStorage.setItem("dl_participant_code", pid);
   } catch (e) {}
+
+  saveSubmissionToVault(STATE.isCompleted);
 }
 
 window.checkForDeviceSession = async function() {
@@ -1156,6 +1192,8 @@ function renderStepConfirmation(container) {
 
   STATE.isSessionActive = false;
   STATE.isCompleted = true;
+  saveSubmissionToVault(true);
+
   STATE.participantId = null;
   localStorage.removeItem("dl_active_session");
   localStorage.removeItem("dl_participant_code");
@@ -1198,9 +1236,17 @@ function renderStepConfirmation(container) {
         <p style="font-size: 12px; color: var(--text-navy-muted); margin-top: 6px;">
           Please retain this code for reference or if you wish to exercise your ethical right to withdraw your data.
         </p>
-        <button class="btn btn-outline" style="margin-top: 14px; padding: 8px 18px; font-size: 13px;" onclick="navigator.clipboard.writeText('${confirmedCode}'); alert('Code copied to clipboard: ' + '${confirmedCode}')">
-          Copy Confirmation Code 📋
-        </button>
+        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px;">
+          <button class="btn btn-outline" style="padding: 8px 16px; font-size: 13px;" onclick="navigator.clipboard.writeText('${confirmedCode}'); alert('Code copied to clipboard: ' + '${confirmedCode}')">
+            Copy Confirmation Code 📋
+          </button>
+          <button class="btn btn-outline" style="padding: 8px 16px; font-size: 13px; color: var(--accent-purple); border-color: var(--border-lavender);" onclick="downloadSubmissionReceipt('${confirmedCode}')">
+            Download Receipt (.json) 📄
+          </button>
+        </div>
+        <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: #059669; font-weight: 700; margin-top: 12px; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 4px 10px; border-radius: 999px;">
+          <span>✓</span> Recorded in Research Data Vault
+        </div>
       </div>
 
       <div style="background: var(--bg-surface); border: 1px solid var(--border-lavender); border-radius: var(--radius-md); padding: 22px; text-align: left; max-width: 600px; margin: 0 auto 30px; box-shadow: var(--shadow-subtle);">
@@ -1221,6 +1267,34 @@ function renderStepConfirmation(container) {
     </div>
   `;
 }
+
+window.downloadSubmissionReceipt = function(code) {
+  const confirmedCode = code || STATE.completedParticipantId || localStorage.getItem("dl_last_completed_code") || "DL-COMPLETED";
+  const subStr = localStorage.getItem("dl_last_submission");
+  let data = {
+    protocol: "DL-2026",
+    participant_id: confirmedCode,
+    completed: true,
+    completed_at: new Date().toISOString(),
+    profile: STATE.profile,
+    responses: STATE.responses
+  };
+  if (subStr) {
+    try {
+      const parsed = JSON.parse(subStr);
+      data = { ...data, ...parsed };
+    } catch (e) {}
+  }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `DependencyLab_Receipt_${confirmedCode}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
 
 // ----------------------------------------------------------------------
 // TRANSITIONS & AUTOSAVE HANDLERS
