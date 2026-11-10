@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dependency Lab | Institutional Analytics & Researcher Command Portal</title>
+  <link rel="stylesheet" href="/static/css/admin.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%230A192F'/><circle cx='50' cy='50' r='18' fill='%236D28D9'/></svg>">
+</head>
+<body class="admin-body">
+
+<div class="admin-shell">
+  <!-- Left Navigation Rail -->
+  <aside class="admin-rail">
+    <div class="rail-logo" title="Dependency Lab Protocol DL-2026">DL</div>
+    
+    <div class="rail-item active" onclick="switchAdminTab('dashboard')" data-tooltip="Dashboard Overview">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    </div>
+
+    <div class="rail-item" onclick="switchAdminTab('dependency')" data-tooltip="AI Dependency Analysis">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    </div>
+
+    <div class="rail-item" onclick="switchAdminTab('thinking')" data-tooltip="Independent Thinking Tasks">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/><line x1="9" y1="21" x2="15" y2="21"/></svg>
+    </div>
+
+    <div class="rail-item" onclick="switchAdminTab('decisions')" data-tooltip="Decision Scenarios">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+    </div>
+
+    <div class="rail-item" onclick="switchAdminTab('verification')" data-tooltip="AI Content Verification">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    </div>
+
+    <div class="rail-item" onclick="switchAdminTab('qualitative')" data-tooltip="Qualitative Findings & Coding">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </div>
+
+    <div class="rail-item" onclick="switchAdminTab('exports')" data-tooltip="Data Exports & Codebook">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    </div>
+
+    <div class="rail-spacer"></div>
+
+    <div class="rail-item" onclick="window.open('/', '_blank')" data-tooltip="Launch Participant Portal">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+    </div>
+  </aside>
+
+  <!-- Main Viewport -->
+  <main class="admin-main">
+    <!-- Topbar Navigation -->
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <div class="institutional-badge">
+          <span class="inst-pill">PROTOCOL DL-2026</span>
+          <span class="study-title">Intellectual Autonomy & Generative AI</span>
+        </div>
+        <div class="topbar-section-pill">
+          <span style="color: var(--admin-purple); font-weight: 800;">/</span>
+          <span id="topbarActiveSectionName">Dashboard Overview</span>
+        </div>
+        <div class="study-status-chip">
+          <span class="study-status-dot"></span>
+          <span id="vaultStatusText">Live Data Vault • 0 AI Models</span>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="btn-admin btn-admin-outline" onclick="refreshAdminData()" title="Refresh telemetry from SQLite database">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Sync
+        </button>
+        <button class="btn-admin btn-admin-coral" onclick="downloadCSVExport()">
+          Download Tidy CSV 📥
+        </button>
+      </div>
+    </header>
+
+    <!-- Workspace below Topbar -->
+    <div class="admin-viewport">
+      <!-- Main Analytical Canvas -->
+      <div class="admin-scrollable" id="adminContentArea">
+        <!-- Rendered dynamically by admin.js -->
+      </div>
+
+      <!-- Right Inspector & Stratification Panel -->
+      <aside class="admin-inspector">
+        <div class="inspector-section-header">
+          <span class="inspector-title">Cohort Stratification</span>
+          <span class="filter-count-badge" id="filterStatusBadge">All Active</span>
+        </div>
+
+        <div class="inspector-group">
+          <label class="inspector-label">Academic Status</label>
+          <select id="filterLevel" class="inspector-select" onchange="refreshAdminData()">
+            <option value="all">All Academic Levels</option>
+            <option value="Undergraduate Student (UG)">Undergraduate Student (UG)</option>
+            <option value="Postgraduate Student (PG)">Postgraduate Student (PG)</option>
+            <option value="Doctoral Scholar (PhD)">Doctoral Scholar (PhD)</option>
+            <option value="Postdoctoral / Early-Career Faculty">Postdoctoral / Faculty</option>
+          </select>
+        </div>
+
+        <div class="inspector-group">
+          <label class="inspector-label">Research / Project Experience</label>
+          <select id="filterExp" class="inspector-select" onchange="refreshAdminData()">
+            <option value="all">All Experience Brackets</option>
+            <option value="Beginner">Beginner (First-time)</option>
+            <option value="1 to 2 years">1 to 2 years</option>
+            <option value="3 to 5 years">3 to 5 years</option>
+            <option value="More than 5 years">More than 5 years</option>
+          </select>
+        </div>
+
+        <!-- Telemetry & Health Panel -->
+        <div class="inspector-section-header" style="margin-top: 18px;">
+          <span class="inspector-title">Dataset Telemetry</span>
+        </div>
+        <div class="telemetry-info-card">
+          <div class="telemetry-row">
+            <span class="telemetry-label">Database Engine</span>
+            <span class="telemetry-val">SQLite 3 (WAL)</span>
+          </div>
+          <div class="telemetry-row">
+            <span class="telemetry-label">Active Storage</span>
+            <span class="telemetry-val">Local Isolated</span>
+          </div>
+          <div class="telemetry-row">
+            <span class="telemetry-label">Enrolled Sessions</span>
+            <span class="telemetry-val" id="sideEnrolledCount">0</span>
+          </div>
+          <div class="telemetry-row">
+            <span class="telemetry-label">Completed Sessions</span>
+            <span class="telemetry-val" id="sideCompletedCount" style="color: #059669;">0</span>
+          </div>
+          <div class="telemetry-row">
+            <span class="telemetry-label">Last Database Sync</span>
+            <span class="telemetry-val" id="sideLastSyncTime">Just now</span>
+          </div>
+        </div>
+
+        <!-- Institutional Safeguards -->
+        <div class="inspector-section-header" style="margin-top: 18px;">
+          <span class="inspector-title">Institutional Protocol</span>
+        </div>
+        <div class="protocol-safeguards-box">
+          <div class="safeguard-bullet">✓ <strong>Zero AI Evaluators:</strong> 100% empirical measurement without LLM simulation.</div>
+          <div class="safeguard-bullet">✓ <strong>Cryptographic Anonymity:</strong> Disassociated random IDs (<code>DL-XXXXXX</code>).</div>
+          <div class="safeguard-bullet">✓ <strong>Small-N Privacy:</strong> Cells with N &lt; 3 protected against de-anonymization.</div>
+        </div>
+
+        <!-- Data Management -->
+        <div class="inspector-section-header" style="margin-top: 18px;">
+          <span class="inspector-title">Data Management</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <button class="btn-admin btn-admin-outline" style="width: 100%; justify-content: center;" onclick="downloadJSONArchive()">
+            Export Raw JSON Vault 📦
+          </button>
+          <button class="btn-admin btn-admin-outline" style="width: 100%; justify-content: center; color: #DC2626; border-color: #FECACA; background: #FFF5F5;" onclick="confirmPurgeDatabase()">
+            Purge / Reset Database 🗑️
+          </button>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+
+<!-- Confirmation Modal for Database Purge -->
+<div class="admin-modal-backdrop" id="purgeModal" style="display: none;">
+  <div class="admin-modal-card">
+    <div style="font-size: 32px; margin-bottom: 8px;">⚠️</div>
+    <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin-bottom: 8px;">Confirm Database Purge</h3>
+    <p style="font-size: 13.5px; color: #64748B; line-height: 1.55; margin-bottom: 20px;">
+      This action will permanently delete all participant records, saved responses, and qualitative tags from <code>dependency_lab.db</code>. This action cannot be undone.
+    </p>
+    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+      <button class="btn-admin btn-admin-outline" onclick="closePurgeModal()">Cancel</button>
+      <button class="btn-admin" style="background: #DC2626; color: white;" onclick="executePurgeDatabase()">Yes, Purge All Data</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/admin.js"></script>
+</body>
+</html>

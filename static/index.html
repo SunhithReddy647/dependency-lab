@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dependency Lab | Academic Research Instrument (Protocol DL-2026)</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%230A192F'/><circle cx='50' cy='50' r='18' fill='%236D28D9'/></svg>">
+</head>
+<body>
+
+<div class="academic-backdrop"></div>
+<canvas id="confettiCanvas" style="position:fixed;inset:0;pointer-events:none;z-index:9999;"></canvas>
+
+<!-- Institutional Header & Public Navigation -->
+<header class="inst-header">
+  <div class="inst-brand" onclick="navigateToHome()">
+    <div class="brand-insignia">DL</div>
+    <div class="brand-titles">
+      <span class="brand-name">DEPENDENCY LAB</span>
+      <span class="brand-protocol">Protocol: DL-2026</span>
+    </div>
+  </div>
+
+  <!-- Public Navigation -->
+  <nav class="public-nav">
+    <a class="nav-anchor" onclick="navigateToHome()">Home</a>
+    <a class="nav-anchor" onclick="openModal('aboutModal')">About Research</a>
+    <a class="nav-anchor" onclick="openModal('methodModal')">Methodology</a>
+    <a class="nav-anchor" onclick="startParticipantJourney()">Participate</a>
+  </nav>
+
+  <div class="header-cta-group">
+    <!-- Tactile Sound Effect Toggle -->
+    <div class="sound-toggle-chip" id="soundToggleBtn" onclick="toggleTactileSound()" title="Toggle subtle auditory feedback clicks">
+      <span id="soundIcon">🔊</span>
+      <span id="soundLabel">Sound On</span>
+    </div>
+
+    <button class="btn btn-outline" onclick="openModal('resumeModal')">
+      Resume Session
+    </button>
+    <a href="/admin" target="_blank" class="btn btn-ghost" style="font-weight: 700; color: var(--accent-purple);">
+      Researcher Portal ↗
+    </a>
+  </div>
+</header>
+
+<main id="mainApp">
+  <!-- ========================================================
+       LANDING PAGE
+       ======================================================== -->
+  <section id="landingView" class="landing-container">
+    <div class="hero-academic-box">
+      <div class="academic-badge-pill">
+        <span class="academic-badge-dot"></span>
+        Academic Research Study • Non-AI-Powered Instrument
+      </div>
+
+      <!-- Main Headline -->
+      <h1 class="hero-academic-heading">
+        Are you using AI to think better, or <em>thinking less because of AI?</em>
+      </h1>
+
+      <!-- Supporting Description -->
+      <p class="hero-academic-desc">
+        An academic investigation into how early-career researchers use generative AI, how much they rely on it, and whether they retain the confidence and ability to conduct research independently.
+      </p>
+
+      <!-- CTAs -->
+      <div class="hero-academic-cta-bar">
+        <button class="btn btn-purple" onclick="startParticipantJourney()" style="font-size: 15.5px; padding: 15px 34px;">
+          Participate in the Study →
+        </button>
+        <button class="btn btn-outline" onclick="openModal('methodModal')">
+          Research Methodology
+        </button>
+      </div>
+
+      <!-- Study Specifications Badges -->
+      <div class="study-specs-bar">
+        <div class="study-spec-item">
+          <span class="study-spec-bullet">⏱</span> Estimated Time: 15–20 minutes
+        </div>
+        <div class="study-spec-item">
+          <span class="study-spec-bullet">🔒</span> Anonymous Response Collection
+        </div>
+        <div class="study-spec-item">
+          <span class="study-spec-bullet">🎓</span> Academic Research Purpose
+        </div>
+        <div class="study-spec-item">
+          <span class="study-spec-bullet">⚖️</span> 100% Voluntary Participation
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 Core Research Activity Cards -->
+    <div class="research-cards-grid">
+      <!-- CARD 1: AI Dependency Assessment -->
+      <div class="research-activity-card" onclick="startParticipantJourney(2)">
+        <div class="card-num-eyebrow">Activity 01</div>
+        <h3 class="card-activity-title">AI Dependency Assessment</h3>
+        <p class="card-activity-desc">
+          Explore your AI usage habits, research practices and confidence in completing academic tasks independently.
+        </p>
+        <ul class="card-points-list">
+          <li class="card-point-row"><span class="card-point-check">✓</span> AI usage patterns</li>
+          <li class="card-point-row"><span class="card-point-check">✓</span> Research tasks performed using AI</li>
+          <li class="card-point-row"><span class="card-point-check">✓</span> Perceived dependency baseline</li>
+          <li class="card-point-row"><span class="card-point-check">✓</span> Confidence without AI</li>
+        </ul>
+        <button class="btn btn-outline" style="width: 100%;">Begin Assessment →</button>
+      </div>
+
+      <!-- CARD 2: Independent Thinking Challenges -->
+      <div class="research-activity-card" onclick="startParticipantJourney(3)">
+        <div class="card-num-eyebrow">Activity 02</div>
+        <h3 class="card-activity-title">Independent Thinking Challenges</h3>
+        <p class="card-activity-desc">
+          Respond to realistic academic research situations and demonstrate how you approach problems without depending on external assistance.
+        </p>
+        <ul class="card-points-list">
+          <li class="card-point-row"><span class="card-point-check">✓</span> Research idea development</li>
+          <li class="card-point-row"><span class="card-point-check">✓</span> Independent reasoning</li>
+          <li class="card-point-row"><span class="card-point-check">✓</span> Problem-solving formulation</li>
+          <li class="card-point-row"><span class="card-point-check">✓</span> Unassisted decision-making</li>
+        </ul>
+        <button class="btn btn-outline" style="width: 100%;">Explore Challenges →</button>
+      </div>
+
+      <!-- CARD 3: AI Judgment and Verification -->
+      <div class="research-activity-card" onclick="startParticipantJourney(10)">
+        <div class="card-num-eyebrow">Activity 03</div>
+        <h3 class="card-activity-title">AI Judgment & Verification</h3>
+        <p class="card-activity-desc">
+          Evaluate predefined AI-generated academic content, identify potential errors and examine how you verify information.
+        </p>
+        <ul class="card-points-list">
+          <li class="card-point-row"><span class="card-point-check">✓</span> Critical peer evaluation</li>
+          <li class="card-point-row"><span class="card-point-check">✓</span> Information verification resistance</li>
+          <li class="card-point-row"><span class="card-point-check">✓</span> Trust in automated outputs</li>
+          <li class="card-point-row"><span class="card-point-check">✓</span> Methodological flaw detection</li>
+        </ul>
+        <button class="btn btn-outline" style="width: 100%;">Review Content →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================
+       PARTICIPANT INTERACTIVE RESEARCH JOURNEY
+       ======================================================== -->
+  <section id="participantView" class="participant-shell" style="display: none;">
+    <!-- Live Session HUD (Heads-Up Display) -->
+    <div class="session-hud-card" id="sessionHud">
+      <div class="hud-left">
+        <div class="hud-stopwatch">
+          <span class="hud-timer-dot"></span>
+          <span id="sessionTimerText">⏱ 00:00</span>
+          <span class="hud-pacing-tag">Pacing: Optimal (~15m total)</span>
+        </div>
+        <div class="hud-session-code" id="participantCodeLabel">
+          DL-INIT • 🔒 Confidential
+        </div>
+      </div>
+      <div class="hud-right">
+        <div class="hud-progress-wrap">
+          <div class="hud-progress-labels">
+            <span id="hudStepLabel">Step 1 of 8</span>
+            <span id="hudPercentLabel" style="font-weight: 700; color: var(--accent-purple);">0%</span>
+          </div>
+          <div class="hud-progress-track">
+            <div class="hud-progress-fill" id="hudProgressFill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Visual Stepper Progress Map -->
+    <div class="journey-stepper-wrap" id="journeyStepper">
+      <div class="step-node active" id="node_0"><div class="step-node-bubble">1</div><span class="step-node-text">Consent</span></div>
+      <div class="step-node" id="node_1"><div class="step-node-bubble">2</div><span class="step-node-text">Profile</span></div>
+      <div class="step-node" id="node_2"><div class="step-node-bubble">3</div><span class="step-node-text">Habits</span></div>
+      <div class="step-node" id="node_3"><div class="step-node-bubble">4</div><span class="step-node-text">Ideas</span></div>
+      <div class="step-node" id="node_4"><div class="step-node-bubble">5</div><span class="step-node-text">Problem</span></div>
+      <div class="step-node" id="node_5"><div class="step-node-bubble">6</div><span class="step-node-text">Argument</span></div>
+      <div class="step-node" id="node_6"><div class="step-node-bubble">7</div><span class="step-node-text">Scenarios</span></div>
+      <div class="step-node" id="node_7"><div class="step-node-bubble">8</div><span class="step-node-text">Verification</span></div>
+      <div class="step-node" id="node_8"><div class="step-node-bubble">9</div><span class="step-node-text">Reflection</span></div>
+    </div>
+
+    <!-- Dynamic Milestone Cheer Banner -->
+    <div class="milestone-cheer-banner" id="milestoneCheerBanner">
+      <div class="cheer-text">
+        <span>✨</span>
+        <span id="cheerMessage">Welcome! You are contributing to groundbreaking research on academic autonomy.</span>
+      </div>
+      <div class="keyboard-hint-pill">
+        <span class="key-cap">1-5</span> Quick Select &bull; <span class="key-cap">Enter ↵</span> Next
+      </div>
+    </div>
+
+    <!-- Active Activity Canvas Card -->
+    <div class="activity-canvas-card">
+      <div id="activityBody">
+        <!-- Injected dynamically by app.js -->
+      </div>
+
+      <!-- Navigation Footer -->
+      <div class="activity-nav-footer">
+        <button class="btn btn-ghost" id="stepBackBtn" onclick="onStepBack()">
+          ← Previous Step
+        </button>
+        <span class="auto-save-status-text" id="footerAutoSaveText">
+          ✓ Autosaved locally
+        </span>
+        <button class="btn btn-purple" id="stepNextBtn" onclick="onStepNext()">
+          <span id="stepNextBtnText">Continue</span> →
+        </button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Autosave Confirmation Toast -->
+<div class="saved-status-chip" id="savedStatusChip">
+  <span>✓</span> Response saved anonymously
+</div>
+
+<!-- ABOUT RESEARCH MODAL -->
+<div class="modal-backdrop" id="aboutModal" style="display: none;">
+  <div class="modal-content-card">
+    <h3 style="font-family: var(--font-serif); font-size: 22px; color: var(--text-navy); margin-bottom: 12px;">About the Research Study</h3>
+    <p style="font-size: 14px; color: var(--text-navy-secondary); line-height: 1.6; margin-bottom: 12px;">
+      <strong>Research Title:</strong> Dependence on Generative AI in Academic Research: Exploring Independent Thinking and Intellectual Autonomy Among Early-Career Researchers.
+    </p>
+    <p style="font-size: 14px; color: var(--text-navy-secondary); line-height: 1.6; margin-bottom: 12px;">
+      <strong>Objective:</strong> To investigate how undergraduate, postgraduate, and doctoral researchers utilize generative AI, the extent of cognitive reliance, and whether perceived independence aligns with actual decision-making behavior.
+    </p>
+    <button class="btn btn-outline" style="width: 100%;" onclick="closeModal('aboutModal')">Close</button>
+  </div>
+</div>
+
+<!-- METHODOLOGY MODAL -->
+<div class="modal-backdrop" id="methodModal" style="display: none;">
+  <div class="modal-content-card">
+    <h3 style="font-family: var(--font-serif); font-size: 22px; color: var(--text-navy); margin-bottom: 12px;">Research Methodology</h3>
+    <p style="font-size: 14px; color: var(--text-navy-secondary); line-height: 1.6; margin-bottom: 12px;">
+      The study uses a mixed qualitative-dominant and behavioral assessment battery consisting of:
+    </p>
+    <ul style="padding-left: 20px; font-size: 14px; color: var(--text-navy-secondary); line-height: 1.6; margin-bottom: 20px;">
+      <li><strong>Baseline Dependency Assessment:</strong> Capturing self-reported usage frequencies, confidence, and task allocation.</li>
+      <li><strong>Independent Problem Formulation:</strong> Evaluating unassisted hypothesis and problem identification.</li>
+      <li><strong>Decision Scenarios:</strong> Testing revealed actions across 4 realistic academic crises with hidden dependency coding.</li>
+      <li><strong>Content Verification:</strong> Measuring critical scrutiny against pre-formulated methodology containing planted statistical errors.</li>
+      <li><strong>Metacognitive Reflection:</strong> Assessing post-task changes in perceived dependency.</li>
+    </ul>
+    <button class="btn btn-outline" style="width: 100%;" onclick="closeModal('methodModal')">Close</button>
+  </div>
+</div>
+
+<!-- RESUME STUDY MODAL -->
+<div class="modal-backdrop" id="resumeModal" style="display: none;">
+  <div class="modal-content-card">
+    <h3 style="font-family: var(--font-serif); font-size: 20px; color: var(--text-navy); margin-bottom: 10px;">Resume Your Research Session</h3>
+    <p style="font-size: 14px; color: var(--text-navy-secondary); margin-bottom: 16px;">
+      Enter the anonymous 8-character code you received when commencing (e.g. <code>DL-8F4A19</code>):
+    </p>
+    <input type="text" id="resumeInputCode" class="field-control-text" placeholder="DL-XXXXXX" style="text-transform: uppercase; font-family: var(--font-mono); text-align: center; font-size: 18px; margin-bottom: 16px;">
+    <button class="btn btn-purple" style="width: 100%;" onclick="submitResumeSession()">Resume Session →</button>
+  </div>
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
